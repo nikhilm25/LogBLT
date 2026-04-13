@@ -1,83 +1,95 @@
-<div align="center">
+# LogBLT: Byte Latent Transformer for Log Anomaly Detection
 
-# 🔬 LogBLT
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-native-orange)](https://pytorch.org/)
 
-**Byte Latent Transformer for Log Anomaly Detection**
+Detecting anomalies in large-scale system logs is a significant challenge due to the immense volume, unstructured nature of log data, and the unpredictable variations in log formats over time. Most existing log parsing approaches fail to adapt effectively to out-of-vocabulary tokens or rely on computationally expensive pre-processing steps.
 
-[![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white)](#)
-[![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)](#)
-
-A state-of-the-art log anomaly detection model based on Meta AI's **Byte Latent Transformer (BLT)** architecture. LogBLT operates directly on **raw bytes**, utilizing **Shannon entropy** to dynamically divide each log line into predictable (low-entropy) and unpredictable (high-entropy) patches.
-
-</div>
+LogBLT solves this by introducing a raw-byte processing framework for log anomaly detection based on Meta AI's Byte Latent Transformer (BLT) architecture. It utilizes a Shannon entropy-based patching mechanism to dynamically divide each log line into predictable (low-entropy) and unpredictable (high-entropy) segments, followed by a hierarchical restoration and attention network to effectively classify system anomalies natively.
 
 ---
 
-## 🌟 Key Features
+## Key Innovations
 
-- **Raw Byte Processing:** No need for complex log parsing or tokenization. Operates directly on UTF-8 bytes.
-- **Entropy-Based Patching:** Computes Shannon entropy to classify patches as High Entropy (HE) or Low Entropy (LE).
-- **Hierarchical Architecture:** 
-  - **Local Encoder:** Sliding-window byte transformer.
-  - **Global Transformer:** Full self-attention over patches.
-- **Entropy-Aware Aggregator:** Attention pooling intelligently weighted toward high-entropy patches.
-- **Robust Loss Function:** Utilizes Focal Loss with class weighting to handle severe class imbalance in log datasets.
-
-## 🏗️ Architecture
-
-The pipeline seamlessly transforms raw logs into binary anomaly classifications:
-
-`Raw bytes → Entropy Patcher → Local Encoder → Global Transformer → Entropy-Aware Aggregator → Classifier`
-
-```mermaid
-graph TD
-    A[Raw Log Line] --> B[Byte Encoding & Padding]
-    B --> C[Entropy Patcher]
-    C -->|Shannon Entropy| D[Local Encoder<br>Sliding Window]
-    D --> E[Global Transformer<br>Self-Attention]
-    E --> F[Entropy-Aware Aggregator<br>Attention Pooling]
-    F --> G[Classification Head<br>Normal / Anomaly]
-```
-
-## 📊 Dataset
-
-Trained and evaluated on the **BGL (Blue Gene/L Supercomputer) Log Dataset**.
-- **Dataset Setup:** Stratified subsampling (300K Normal + 75K Anomaly)
-- **Patch Size:** 8 Bytes per patch
-- **Max Bytes:** 256 per log line
-
-## 🚀 Quick Start
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/LogBLT.git
-   cd LogBLT
-   ```
-2. Open the Jupyter Notebook:
-   ```bash
-   jupyter notebook code.ipynb
-   ```
-3. Run the cells to train and evaluate the BLT-LAD model.
-
-## ⚙️ Model Configuration
-
-| Hyperparameter | Value | Description |
-|----------------|-------|-------------|
-| `max_bytes` | 256 | Maximum bytes per log line |
-| `patch_size` | 8 | Bytes per patch |
-| `entropy_threshold`| 1.5 | Shannon entropy threshold for patch type |
-| `dim_local` | 256 | Dimensionality of Local Encoder |
-| `dim_global` | 512 | Dimensionality of Global Transformer |
-| `focal_gamma` | 2.0 | Gamma value for Focal Loss |
-| `epochs` | 15 | Total training epochs |
-
-## 📈 Performance
-
-The model effectively learns to distinguish anomalous log lines from benign ones, achieving exceptional precision, recall, and F1 scores on the validation set after training for 15 epochs. It reaches an impressive **0.999** validation F1 score and perfect training accuracy.
-
-*See the training loop in `code.ipynb` for detailed epoch-by-epoch performance.*
+*   **Raw Byte Processing**: Bypasses traditional log parsers and tokenizers by operating directly on standard UTF-8 encoded bytes, providing high out-of-distribution resilience.
+*   **Entropy-Based Patching**: Computes Shannon entropy dynamically to construct fixed 8-byte patches, categorizing sequential byte chunks as High Entropy (HE) or Low Entropy (LE).
+*   **Hierarchical Attention Architecture**: Utilizes a combination of a Sliding-Window Local Encoder and a Global Self-Attention Transformer to contextualize local byte structures against global log line features.
+*   **Entropy-Aware Aggregator**: Adopts an intelligent attention pooling layer that adaptively weighs and extracts high-entropy (unpredictable) feature representations for the final classification sequence.
+*   **Severe Imbalance Handling**: Supports tailored dataset representations leveraging Focal Loss and class weighting to penalize confident misclassifications on inherently imbalanced log domains. 
 
 ---
-<div align="center">
-  Built with ❤️ for advanced log anomaly detection.
-</div>
+
+## Framework Architecture & Results
+
+Our repository contains the implementation details, visual architectural layouts, and data analytics demonstrating our framework's capability in identifying anomalies across the BGL supercomputing log dataset:
+
+### Framework Architecture
+
+**LogBLT Architecture Part I: Global Architecture Pipeline**  
+*This visualizes the overall architecture behind our Byte Latent Transformer for anomalous log tracking.*
+<p align="center">
+  <img src="assets/arch.jpg" width="100%" />
+</p>
+
+**LogBLT Architecture Part II: Byte-Level processing and Attention Components**  
+*This figure illustrates the deeper internal mechanisms. Low-level strings are encoded and padded into a fixed length of 256 bytes. They pass through the designated entropy patcher, generating continuous chunks evaluated by the sliding window local encoder, subsequently attended globally to isolate high entropy outliers.*
+<p align="center">
+  <img src="assets/bltarch.jpg" width="100%" />
+</p>
+
+### Experimental Analytics
+
+**Feature Analysis: Correlation Heatmap**  
+*The Correlation Heatmap highlights the relationships across entropy patching configurations, dataset labels, and localized byte structures prior to the global attention stage.*
+<p align="center">
+  <img src="assets/Correlation_Heatmap.png" width="100%" />
+</p>
+
+**Performance Evaluation: Accuracy and Distribution**  
+*Visualizes a comprehensive summary of normal versus anomalous occurrences and associated predictions in the dataset validation subset.*
+<p align="center">
+  <img src="assets/Bar_plot.png" width="80%" />
+</p>
+
+**State-of-the-Art Discriminative Performance**  
+*The Confusion Matrix details the final predicted classification capability of the model on the testing set. LogBLT consistently identifies the anomaly class with a high recall profile and minimal false-positive rates.*
+<p align="center">
+  <img src="assets/Confusion_Matrix.png" width="80%" />
+</p>
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+*   Python 3.12+
+*   PyTorch (CUDA runtime environment highly recommended for fast execution)
+*   Pandas / Scikit-learn / Matplotlib
+
+### Usage & Setup
+
+#### Training
+The `code.ipynb` notebook contains the full definition of the PyTorch framework, dataset loaders, and hyperparameter assignments.
+Run the cells sequentially from the notebook environment to ingest the formatted BGL dataset and begin training.
+
+**Key Parameters (Configurable inline):**
+*   `max_bytes`: 256
+*   `patch_size`: 8 
+*   `entropy_threshold`: 1.5
+*   `dim_local` / `dim_global`: 256 / 512
+*   `epochs`: 15
+*   `batch_size`: 32
+
+#### Evaluation
+The trailing cells inside `code.ipynb` visualize metric calculations spanning:
+*   `Accuracy`
+*   `Precision`, `Recall`, and `F1 Score`
+*   `ROC AUC`
+
+A model checkpoint is periodically saved to disk capturing the greatest validation F1 performance. 
+
+---
+
+## License
+This project is open-sourced and falls under its respective distribution properties detailed in the `LICENSE` file.
